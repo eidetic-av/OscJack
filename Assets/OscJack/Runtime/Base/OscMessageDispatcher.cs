@@ -10,13 +10,11 @@ namespace OscJack
     {
         #region Callback delegate definition
 
-        public delegate void MessageCallback(string address, OscDataHandle data);
-
         #endregion
 
         #region Public accessors
 
-        public void AddCallback(string address, MessageCallback callback)
+        public void AddCallback(string address, Action<string, OscDataHandle> callback)
         {
             lock (_callbackMap)
             {
@@ -27,7 +25,7 @@ namespace OscJack
             }
         }
 
-        public void RemoveCallback(string address, MessageCallback callback)
+        public void RemoveCallback(string address, Action<string, OscDataHandle> callback)
         {
             lock (_callbackMap)
             {
@@ -47,7 +45,7 @@ namespace OscJack
         {
             lock (_callbackMap)
             {
-                MessageCallback callback;
+                Action<string, OscDataHandle> callback;
 
                 // Address-specified callback
                 if (_callbackMap.TryGetValue(address, out callback))
@@ -63,8 +61,8 @@ namespace OscJack
 
         #region Private fields
 
-        Dictionary<string, MessageCallback>
-            _callbackMap = new Dictionary<string, MessageCallback>();
+        Dictionary<string, Action<string, OscDataHandle>>
+            _callbackMap = new Dictionary<string, Action<string, OscDataHandle>>();
 
         #endregion
     }
