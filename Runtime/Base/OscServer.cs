@@ -13,7 +13,7 @@ using System.Threading;
 #if OSC_SERVER_LIST
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("jp.keijiro.osc-jack.Editor")] 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("jp.keijiro.osc-jack.Editor")]
 #endif
 
 namespace OscJack
@@ -22,9 +22,15 @@ namespace OscJack
     {
         #region Public Properties And Methods
 
-        public OscMessageDispatcher MessageDispatcher {
+        public OscMessageDispatcher MessageDispatcher
+        {
             get { return _dispatcher; }
         }
+
+        public bool Connected => 
+            !(_socket.Poll(1000, SelectMode.SelectRead) && _socket.Available == 0);
+        public Action OnDataReceived = () => { };
+        public Action OnDispose = () => { };
 
         public OscServer(int listenPort)
         {
@@ -41,9 +47,9 @@ namespace OscJack
             _thread = new Thread(ServerLoop);
             _thread.Start();
 
-            #if OSC_SERVER_LIST
+#if OSC_SERVER_LIST
             _servers.Add(this);
-            #endif
+#endif
         }
 
         public void Dispose()
@@ -51,9 +57,11 @@ namespace OscJack
             Dispose(true);
             GC.SuppressFinalize(this);
 
-            #if OSC_SERVER_LIST
+#if OSC_SERVER_LIST
             if (_servers != null) _servers.Remove(this);
-            #endif
+#endif
+
+            OnDispose.Invoke();
         }
 
         #endregion
@@ -92,7 +100,7 @@ namespace OscJack
 
         #region For editor functionalities
 
-        #if OSC_SERVER_LIST
+#if OSC_SERVER_LIST
 
         static List<OscServer> _servers = new List<OscServer>(8);
         static ReadOnlyCollection<OscServer> _serversReadOnly;
@@ -107,7 +115,7 @@ namespace OscJack
             }
         }
 
-        #endif
+#endif
 
         #endregion
 
@@ -130,7 +138,10 @@ namespace OscJack
                 {
                     int dataRead = _socket.Receive(buffer);
                     if (!_disposed && dataRead > 0)
+                    {
                         parser.Parse(buffer, dataRead);
+                        OnDataReceived.Invoke();
+                    }
                 }
                 catch (SocketException)
                 {
@@ -142,11 +153,11 @@ namespace OscJack
                 }
                 catch (Exception e)
                 {
-                #if UNITY_EDITOR || UNITY_STANDALONE
+#if UNITY_EDITOR || UNITY_STANDALONE
                     if (!_disposed) UnityEngine.Debug.Log(e);
-                #else
+#else
                     if (!_disposed) System.Console.WriteLine(e);
-                #endif
+#endif
                     break;
                 }
             }
