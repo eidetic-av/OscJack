@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace OscJack
 {
@@ -48,6 +49,16 @@ namespace OscJack
             if (tag == 'i') return OscDataTypes.ReadInt(_sharedBuffer, offs).ToString();
             if (tag == 'f') return OscDataTypes.ReadFloat(_sharedBuffer, offs).ToString();
             return "";
+        }
+
+        public Vector3 ToVector3()
+        {
+            return new Vector3
+            (
+                GetElementAsFloat(0),
+                GetElementAsFloat(1),
+                GetElementAsFloat(2)
+            );
         }
 
         #endregion
